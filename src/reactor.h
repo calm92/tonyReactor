@@ -5,6 +5,7 @@
 #include "protocol.h"
 #include "log.h"
 #include "protocolMaster.h"
+#include "./timer/timer.h"
 
 #include<string>
 #include<netinet/in.h>
@@ -21,7 +22,7 @@
 #define EPOLLSIZE 4096
 #define MAXEVENTS 4096
 #define BUFSIZE 4096
-extern errorCode errorcode;
+#define EPOLLTIMEOUT 100
 
 
 
@@ -35,17 +36,26 @@ private:
 	int listenfd;
 	int epfd ;
 	struct sockaddr_in  serverAddr;
+	Timer * timer;
 	ProtocolMaster<DerivedProtocol> *protocolMaster;
 	void closeConnect(Protocol*);
 	void checkProtocolClose(Protocol*);
-	//function
 	int epoll_loop();
+	int make_socket_non_blocking(int fd) ;
+
 public:
 	Reactor();
 	void listenPort(int);
 	void run();
-	int make_socket_non_blocking(int fd) ;
+	void callLater(callbackPtr, void*, time_t );
 };
+
+template<class DerivedProtocol>
+void Reactor<DerivedProtocol>::callLater(callbackPtr callback, void* arg, time_t seconds){
+	timer->registerTimerEvent(callback, arg, seconds);
+	return;
+}
+
 
 template<class DerivedProtocol>
 void Reactor<DerivedProtocol>::checkProtocolClose(Protocol* pro){
@@ -60,7 +70,7 @@ void Reactor<DerivedProtocol>::checkProtocolClose(Protocol* pro){
 template<class DerivedProtocol>
 void Reactor<DerivedProtocol>::closeConnect(Protocol* pro){
 	char tempbuf[256];
-	sprintf(tempbuf, "client [%s:%d] disconnected and the protocol info:index=%d, fd = %d"\
+	sprintf(tempbuf, "client [%s:%d] disconnected and the protocol info:index=%d, fd = %d"
 			,pro->clientHost.data(),pro->clientPort, pro->index, pro->socketfd);
 	infoLog(tempbuf);
 
@@ -89,6 +99,8 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 	struct epoll_event *events = (struct epoll_event* )malloc(sizeof(struct epoll_event)*MAXEVENTS);
 	struct sockaddr_in clientaddr;
 	char* buf = (char*)malloc(BUFSIZE);
+	
+	time_t epoll_timeout = EPOLLTIMEOUT;
 
 	memset((void*)&listenEvent, 0, sizeof(listenEvent) );
 	memset((void*)&clientaddr, 0, sizeof(struct sockaddr_in));
@@ -115,7 +127,7 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 
 	//epoll_wait
 	while(1){
-		int n = epoll_wait(epfd, events, MAXEVENTS, 60*1000*60);
+		int n = epoll_wait(epfd, events, MAXEVENTS, epoll_timeout * 1000);
 		for(int i=0; i<n; i++){
 			Protocol* eventPro = (Protocol* )events[i].data.ptr;
 
@@ -157,8 +169,8 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 					}
 					//info log
 					char tempbuf[256];
-					sprintf(tempbuf, "client: [%s:%d] connected and the protocol info: index =%d, fd = %d"\
-							,pro->clientHost.data(),pro->clientPort,pro->index, pro->socketfd);
+					sprintf(tempbuf, "client: [%s:%d] connected and the protocol info: index =%d, fd = %d"
+												,pro->clientHost.data(),pro->clientPort,pro->index, pro->socketfd);
 					infoLog(tempbuf);
 
 					pro->connectionMade();
@@ -252,6 +264,14 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 				}	
 			}	
 		}
+
+		//处理超时事件
+		epoll_timeout =  timer->timer_loop();
+		if(epoll_timeout  ==  0)
+			epoll_timeout = EPOLLTIMEOUT;
+		char buf[256];
+		sprintf(buf, "the timer loop is done and the epoll_timeout = %ld ", epoll_timeout);
+		debugLog(buf);
 	}
 }
 	
@@ -290,6 +310,12 @@ Reactor<DerivedProtocol>::Reactor(){
 	listenfd = -1;
 	protocolMaster = new ProtocolMaster<DerivedProtocol>;
 	initLog();
+
+	//init Timer
+	Timer* newTimer = new Timer();
+	timer = newTimer;
+	Protocol::timer = newTimer;
+
 	return;
 }
 
@@ -309,6 +335,14 @@ void Reactor<DerivedProtocol>::listenPort(int port = 5000){
 		exit(1);
 	}
 
+	//address 复用
+	int flag =1;
+	int len = sizeof(int);
+	if(setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &flag, len) < 0){
+		errorLog("setsockopt error");
+		exit(1);
+	}
+
 
 	if (bind(listenfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0){
 		errorLog("bind error");
@@ -324,15 +358,6 @@ void Reactor<DerivedProtocol>::listenPort(int port = 5000){
 
 	if ( make_socket_non_blocking(listenfd) < 0)
 		exit(1);
-
-	int flag =1;
-	int len = sizeof(int);
-	if(setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &flag, len) < 0){
-		errorLog("setsockopt error");
-		exit(1);
-	}
-
-
 
 
 	char tempbuf[256];

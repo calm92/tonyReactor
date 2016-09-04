@@ -16,12 +16,8 @@ enum errorCode{
 	READ_ERROR = -11,
 	WRITE_ERRPR = -12,
 
-
-
 };
 
-
-errorCode errorcode = NORMAL;
-
+extern errorCode errorcode ;
 
 #endif

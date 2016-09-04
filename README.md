@@ -10,6 +10,21 @@ virtual void connectionLost() ;			//服务器断开连接时的动作
 
 tonyReactor还实现了主动断开连接的功能，只需要调用
 closeConnect()函数即可。
+向客户端发送数据：
+writeToClient(string data);
+
+
+************************************
+2016.9.4添加新功能：
+添加定时器功能：
+如果需要添加定时器，只需要在自定义的继承类中，调用：
+callLater(callbackPtr callback, void* arg, time_t seconds);
+其中：
+callbackPtr:   typedef void (*callbackPtr) (void* arg)
+arg为函数参数
+seconds:为seconds后执行任务callback
+为了方便，暂时时间精度只到秒，后面考虑增加时间精度到ms
+
 
 具体的例子见sample/main.cpp
 编译main.cpp方法：./make.sh

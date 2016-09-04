@@ -4,9 +4,15 @@
 
 INITIALIZE_EASYLOGGINGPP
 
+
+
 void initLog(){
 	el::Configurations conf("log.conf");
 	el::Loggers::reconfigureAllLoggers(conf);
+}
+
+void warnLog(const char* s){
+	LOG(WARNING)<<s;
 }
 
 void errorLog(const char* s){

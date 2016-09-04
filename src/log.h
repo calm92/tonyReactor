@@ -5,5 +5,6 @@ void initLog();
 void errorLog(const char* s);
 void debugLog(const char* s);
 void infoLog(const char* s);
+void warnLog(const char* s);
 
 #endif

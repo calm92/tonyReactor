@@ -3,6 +3,15 @@
 #include<unistd.h>
 #include<errno.h>
 #include<string>
+//#include "timer.h"
+
+Timer* Protocol::timer = NULL;
+
+void Protocol::callLater(callbackPtr callback, void* arg, time_t seconds){
+	Protocol::timer->registerTimerEvent(callback, arg, seconds);
+	return;
+}
+
 
 int Protocol::getIndex(){
 	return this->index;

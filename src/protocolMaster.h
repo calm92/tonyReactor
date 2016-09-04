@@ -10,7 +10,6 @@
 #define INITIALPOLLSIZE 2
 
 
-extern errorCode errorcode;
 
 template<class DerivedProtocol>
 class ProtocolMaster{
@@ -76,8 +75,8 @@ Protocol* ProtocolMaster<DerivedProtocol>:: getProtocolIns(){
 	ins->index = poolSize;
 	poolSize++;
 	char buf[1024];
-	sprintf(buf, "make the instance of protocol and the instance index = %d, \
-			poolSize = %d, poolCap= %d", ins->index, poolSize,poolCap);
+	sprintf(buf, "make the instance of protocol and the instance index = %d,"
+			"poolSize = %d, poolCap= %d", ins->index, poolSize,poolCap);
 	debugLog(buf);
 	return ins;
 }
