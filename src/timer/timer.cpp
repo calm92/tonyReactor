@@ -15,6 +15,11 @@ timerEvent::timerEvent(){
 	return; 
 }
 
+timeoutEvent::timeoutEvent(){
+	callback = NULL;
+	arg = NULL;
+	return;
+}
 
 void timerEvent::destory(){
 	callback = NULL;
@@ -88,12 +93,17 @@ int Timer::pop(){
 
 time_t Timer::timer_loop(){
 	char buf[256];
+
+	mtx.lock();
 	sprintf(buf, "start the timer loop, the events size = %d", timerEventsSize);
 	debugLog(buf);
 	
 
-	if(timerEventsSize == 0)
+	if(timerEventsSize == 0){
+		//最好不要在中间return，容易造成死锁
+		mtx.unlock();
 		return 0;
+	}
 	time_t currentTime= 0;
 	time(&currentTime);
 	while(timerEventsSize > 0){
@@ -102,13 +112,12 @@ time_t Timer::timer_loop(){
 			break;
 		if(event->timestamp > currentTime)
 			break;
-		//执行注册事件
-		char buf[256];
-		sprintf(buf, "do the timer event, the event timestamp is %ld, and currentTime=%ld", event->timestamp, currentTime);
-		debugLog(buf);
+		//将超时事件加入队列
+		timeoutEvent tempevent;
+		tempevent.callback = event->callback;
+		tempevent.arg = event->arg;
+		timeoutEvents.push_back(tempevent);
 
-		callbackPtr callback = event->callback;
-		callback(event->arg);
 		sprintf(buf, "start pop the event from the timerEvents, and the timerEventSize=%d", timerEventsSize);
 		debugLog(buf);
 		pop();
@@ -116,13 +125,33 @@ time_t Timer::timer_loop(){
 		debugLog(buf);
 		continue;
 	}
+	mtx.unlock();
 
+	
+
+	//执行timeoutevent
+	sprintf(buf, "do the timer event, currentTime=%ld", currentTime);
+	debugLog(buf);
+	int len = timeoutEvents.size();
+	for(int i=0; i<len; i++){
+		callbackPtr callback = timeoutEvents[i].callback;
+		callback(timeoutEvents[i].arg);
+	}
+	//clear不释放内存，避免重复申请释放内存
+	timeoutEvents.clear();
+
+	time(&currentTime);
+	mtx.lock();
+	time_t seconds = 0;
 	if(timerEventsSize == 0)
-		return 0;
+		seconds = 0;
+	else{
+		timerEvent* event = timerEvents[0];
+		seconds = (event->timestamp - currentTime);
+	}
+	mtx.unlock();
 
-	timerEvent* event = timerEvents[0];
-	return (event->timestamp - currentTime);
-
+	return seconds;
 }
 
 
@@ -153,10 +182,14 @@ int Timer::addTimerEventCap(int count){
 
 
 int Timer::addTimerEvent(callbackPtr callback, void* arg, time_t seconds){
+	mtx.lock();
+
 	if(timerEventsSize  == timerEventsCap){
 		int ret = addTimerEventCap(timerEventsSize);
-		if(ret < 0)
+		if(ret < 0){
+			mtx.unlock();
 			return -1;
+		}
 	}
 	time_t currentTime = 0;
 	time(&currentTime);
@@ -186,6 +219,8 @@ int Timer::addTimerEvent(callbackPtr callback, void* arg, time_t seconds){
 		"timer_events size = %d, timer_events cap = %d, register event index = %d ", 
 		timerEventsSize,timerEventsCap, temp);
 	debugLog(buf);
+
+	mtx.unlock();
 	return 0;
 }
 

@@ -19,15 +19,16 @@ public:
 	virtual void dataReceived(std::string data) = 0;
 	virtual void connectionMade() = 0;
 	virtual void connectionLost() = 0;
-	
+	void init();
+	int epollWrite();
+	int epollRead();
+	int getIndex();
 	//可调用函数
 	void closeConnect();
 	void writeToClient(std::string data);
 	void callLater(callbackPtr, void*, time_t );
 
-	void init();
-	int epollWrite();
-	int getIndex();
+	
 
 	Protocol();
 	~Protocol();

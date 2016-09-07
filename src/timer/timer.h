@@ -3,6 +3,7 @@
 
 #include<vector>
 #include<time.h>
+#include<mutex>
 #include "../errorCode.h"
 
 typedef void (*callbackPtr) (void *);
@@ -18,7 +19,12 @@ struct timerEvent{
 	void destory();
 };
 
-
+//超时事件结构体
+struct timeoutEvent{
+	callbackPtr callback;
+	void* arg;
+	timeoutEvent();
+};
 
 //定时器结构体
 class Timer{
@@ -30,7 +36,9 @@ public:
 
 
 private:
+	std::mutex mtx;		//互斥锁
 	std::vector<timerEvent*> timerEvents;		//时间队列，最小堆
+	std::vector<timeoutEvent> timeoutEvents;
 	void init();
 	int timerEventsCap;
 	int timerEventsSize;

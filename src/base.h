@@ -6,6 +6,6 @@
 #define EPOLLSIZE 4096			//epoll_create的size大小
 #define MAXEVENTS 4096			//epoll_wait中的maxevents大小
 #define BUFSIZE 4096				//
-#define EPOLLTIMEOUT 100			//epoll timeout 的初始值
+#define EPOLLTIMEOUT 1			//epoll timeout 的初始值
 #define CLOSEPORT        5432
 #define THREADCOUNT  4

@@ -103,46 +103,12 @@ void worker_epoll_loop(int epfd){
 
 			//读事件
 			if(events[i].events & EPOLLIN){
-				int n = 0;
-				std::string data;
-				while(1){
-					n = read(eventPro->socketfd,  buf, BUFSIZE -1);
-					if(n < 0){
-						if(errno == EAGAIN){
-							eventPro->dataReceived(data);
-							if(eventPro->EPOLL_OUT_OP == 1){
-								//需要向客户端写
-								struct  epoll_event event;
-								event.data.ptr = (void*)eventPro;
-								event.events = EPOLLIN | EPOLLET | EPOLLOUT;
-								epoll_ctl(epfd, EPOLL_CTL_MOD, eventPro->socketfd, &event);
-							}
-							checkProtocolClose(eventPro);
-							break;
-						}
-						else if (errno == EINTR)
-							continue;
-						else{
-							errorcode = READ_ERROR;
-							sprintf(buf, "[thread:%d] client[%s:%d] read error",eventPro->threadIndex,eventPro->clientHost.data(), eventPro->clientPort);
-							errorLog(buf);
-							closeConnect(eventPro);
-							break;
-						}
+				int ret = eventPro->epollRead();
+				if(ret < 0)
+					closeConnect(eventPro);
+				else
+					checkProtocolClose(eventPro);
 
-					}
-					else if (n == 0){
-						//client close the connection
-						if (!data.empty())
-							eventPro->dataReceived(data);
-						closeConnect(eventPro);
-						break;
-					}
-					else{
-						buf[n] = '\0';
-						data += buf;
-					}
-				}
 			}
 
 			//写事件

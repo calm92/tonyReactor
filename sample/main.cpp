@@ -29,19 +29,21 @@ void myProtocol::dataReceived(std::string data){
 	return;
 
 	//测试定时器
-	int sleepTime = rand() % 20;
-	time_t currentTime;
-	time(&currentTime);
-	std::cout<<"currentTime: "<<currentTime<<"----sleep time:"<<sleepTime<<"-------tag"<<count<<std::endl;
-	callLater(printLater, (void*)count, sleepTime);
-	count++;
-	return;
+	// int sleepTime = rand() % 20;
+	// time_t currentTime;
+	// time(&currentTime);
+	// std::cout<<"currentTime: "<<currentTime<<"----sleep time:"<<sleepTime<<"-------tag"<<count<<std::endl;
+	// callLater(printLater, (void*)count, sleepTime);
+	// count++;
+	// return;
 }
 
 void myProtocol::connectionMade(){
+	std::cout<<"client["<<clientHost<<":"<<clientPort<<"]  connected "<<std::endl;
 }
 
 void myProtocol::connectionLost(){
+	std::cout<<"client["<<clientHost<<":"<<clientPort<<"]  disconnected "<<std::endl;
 }
 
 

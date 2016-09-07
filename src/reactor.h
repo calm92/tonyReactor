@@ -286,16 +286,14 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 				warnLog(buf);
 			}	
 		}
-	}	
-			
 
-	//处理超时事件
-	epoll_timeout =  timer->timer_loop();
-	if(epoll_timeout  ==  0)
-		epoll_timeout = EPOLLTIMEOUT;
-	sprintf(buf, "the timer loop is done and the epoll_timeout = %ld ", epoll_timeout);
-	debugLog(buf);
-	
+		//处理超时事件
+		epoll_timeout =  timer->timer_loop();
+		if(epoll_timeout  ==  0)
+			epoll_timeout = EPOLLTIMEOUT;
+		sprintf(buf, "the timer loop is done and the epoll_timeout = %ld ", epoll_timeout);
+		infoLog(buf);		
+	}		
 }
 	
 
