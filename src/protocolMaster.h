@@ -115,7 +115,7 @@ int ProtocolMaster<DerivedProtocol>::closeProtocol(int index){
 
 	sprintf(buf, "close the connection  protocol to the pool sucess, poolSize= %d, poolCap=%d", poolSize, poolCap);
 	debugLog(buf);
-	return protocolPool[index]->socketfd;
+	return 0;
 }
 
 

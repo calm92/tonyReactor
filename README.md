@@ -40,14 +40,3 @@ seconds:为seconds后执行任务callback
 　　在主线程中，监听两个端口，一个为外部客户端的连接监听端口，另一个则为主线程监听子线程的消息的端口。当子线程需要关闭一个连接时，子线程进行close操作之后，向主线程监听的端口发送一个protocol(连接实例)的index，则主线程可以通过这个index来找到对应的连接实例，从而进行连接池的资源回收。考虑到同一主机之间进行socket通信是不走网卡的，所以效率肯定会高于有锁模型。
 　　通过上述方法，就可以做到多线程的无锁模型。
 　　
-遇到的问题：
-1.在多线程模型中，刚开始采用子线程向主线程采用index的方法，来进行连接的关闭。但是后来查看warnninglog，发现出现大量的Protocol的index错误，即子线程发送的index很多都都超过了poolsize。通过查看日志，发现子线程发送的index数据没有问题。问题出在多线程同步上。主线程对资源进行回收时，有swap的操作，然后在对protocol中的index进行重新赋值。详见代码：
-```
-protocolPool[index]->init();
-std::swap(protocolPool[index],    protocolPool[poolSize-1]);
-protocolPool[index]->index = index;
-poolSize--;
-```
-
-当子线程关闭的是index = poolSize-1的连接时，可能主线程随后进行了交换操作，所以子线程发送的index=poolSize-1,而主线程中，这个index就是一个越界的index,从而导致了错误。
-解决方案：index会变，但是fd是不会变化的。所以考虑在主线程中，维护一个hash表，将fd和index进行一个映射，这样，当主线程进行资源回收的时候，只需要改变hash[fd]的值就可以找到对应的index,从而完成回收。而子线程由发送index转为发送fd.避免同步的问题。

@@ -9,7 +9,6 @@
 #include "worker.h"
 #include "base.h"
 
-#include<ext/hash_map>
 #include<string>
 #include<netinet/in.h>
 #include<unistd.h>
@@ -30,7 +29,6 @@ template<class DerivedProtocol>
 template<class DerivedProtocol>
 class Reactor{
 private:
-	__gnu_cxx::hash_map<int, int> fdHash;		//通过fd得到连接的index
 	int threadCount;
 	int listenfd;
 	int closefd;	
@@ -96,26 +94,17 @@ void Reactor<DerivedProtocol>::checkProtocolClose(Protocol* pro){
 template<class DerivedProtocol>
 void Reactor<DerivedProtocol>::closeConnectProtocol(Protocol* pro){
 	char tempbuf[256];
-	sprintf(tempbuf, "[main thread] close the connection protocol to the pool:client [%s:%d] disconnected and the protocol info:index=%d, fd = %d "
-			,pro->clientHost.data(),pro->clientPort, pro->index, pro->socketfd);
+	sprintf(tempbuf, "[main thread] close the connection protocol[%d] to the pool:client [%s:%d] disconnected and the protocol info:index=%d, fd = %d ",
+			(int)pro,pro->clientHost.data(),pro->clientPort, pro->index, pro->socketfd);
 	infoLog(tempbuf);
 
 	int threadindex = pro->threadIndex;
 	threadConnections[threadindex].connection--;
 	
 	int index = pro->getIndex();
-	int socketfd = protocolMaster->closeProtocol(index);
-	if(socketfd <= 0){
-		sprintf(tempbuf, "socketfd form the closeProtocol is not right and the index = %d", index);
-		errorLog(tempbuf);
-		//debug
-		exit(1);
-		return;
-	}
-
-	fdHash[socketfd] = index;
+	protocolMaster->closeProtocol(index);
 	
-
+	
 	//thread info
 	memset((void*)tempbuf, 0, sizeof(tempbuf));
 	sprintf(tempbuf,"There are %d thread, and each thread has  connection count:\n", THREADCOUNT);
@@ -204,7 +193,6 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 					Protocol* pro = protocolMaster->getProtocolIns();
 					if(pro == NULL)
 						break;
-					fdHash[fd] = pro->index;
 					pro->socketfd = fd;
 					pro->clientPort = ntohs(clientaddr.sin_port);
 					pro->clientHost = inet_ntoa(clientaddr.sin_addr);
@@ -262,28 +250,28 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 					read(fd, readbuf, 256);
 					sprintf(buf, "[main thread] close port have the connection request and  the content: %s", readbuf);
 					infoLog(buf);
+					int addr = 0;
+					sscanf(readbuf,"%d", &addr);
 
-					int proFd = 0;
-					for(int i=0; readbuf[i] != '\0'; i++){
-						proFd = proFd * 10 + readbuf[i] - '0'; 
-					}
-					sprintf(buf, "[main thread] close port get connection fd  to close the [Protocol: fd = %d]", proFd);
-					infoLog(buf);
+					//sprintf(buf, "[main thread] close port get connection fd  to close the [Protocol: fd = %d]", proFd);
+					//infoLog(buf);
 
-					int index = fdHash[proFd];
-					Protocol* closePro = protocolMaster->getProtocolFromIndex(index);
-					if(closePro == NULL){
-						warnLog("index is too not right");
-						close(fd);
-						continue;
-					}
+					//int index = fdHash[proFd];
+					//Protocol* closePro = protocolMaster->getProtocolFromIndex(index);
+					// if(closePro == NULL){
+					// 	warnLog("index is too not right");
+					// 	close(fd);
+					// 	continue;
+					// }
 
 					//debug
-					if(closePro->socketfd != proFd){
-						sprintf(buf, "the fdhash is not right");
-						warnLog(buf);
-						continue;
-					}
+					// if(closePro->socketfd != proFd){
+					// 	sprintf(buf, "the fdhash is not right");
+					// 	warnLog(buf);
+					// 	continue;
+					// }
+
+					Protocol* closePro = (Protocol*)addr;
 					sprintf(buf,"[main thread] close port get the protocol:client[%s:%d] index=%d, threadIndex=%d, fd=%d",
 							closePro->clientHost.data(), closePro->clientPort, closePro->index, closePro->threadIndex, closePro->socketfd);
 					

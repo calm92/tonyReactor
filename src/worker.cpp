@@ -31,9 +31,9 @@ void checkProtocolClose(Protocol* pro){
 
 void closeConnect(Protocol* pro){
 	char buf[256];
-	sprintf(buf, "[thread:%d]start to send to closePort, client [%s:%d] disconnected ,the protocol info:profd=%d",
-			pro->threadIndex,pro->clientHost.data(),pro->clientPort, pro->socketfd);
-	infoLog(buf);
+	// sprintf(buf, "[thread:%d]start to send to closePort, client [%s:%d] disconnected ,the protocol info:profd=%d",
+	// 		pro->threadIndex,pro->clientHost.data(),pro->clientPort, pro->socketfd);
+	// infoLog(buf);
 	//取消连接的文件描述符
 	struct  epoll_event event;
 	event.data.fd = pro->socketfd;
@@ -43,14 +43,12 @@ void closeConnect(Protocol* pro){
 		errorLog(buf);
 	}
 	close(pro->socketfd);
-	sprintf(buf, "[thread:%d] close the connection[fd:%d] in the epoll success and have send the index to the main thread",
-				pro->threadIndex,pro->socketfd);
-	infoLog(buf);
+
 	//user function
 	pro->connectionLost();
 
-	//向本机关闭端口发送gf
-	sprintf(buf, "%d", pro->socketfd);
+	//向本机关闭端口发送protocol的地址
+	sprintf(buf, "%d", (int)pro);
 	int sockfd = socket(AF_INET, SOCK_STREAM,0);
 	if( connect(sockfd, (struct sockaddr*)&localCloseAddr, sizeof(struct sockaddr)) < 0){
 		char temp[256];
@@ -60,6 +58,13 @@ void closeConnect(Protocol* pro){
 		return;
 	}
 	int n = write(sockfd, buf, strlen(buf));
+	char tempbuf[256];
+	sprintf(tempbuf, "[thread:%d] write to the main thread close port :  %s", pro->threadIndex, buf);
+	infoLog(tempbuf);
+
+	sprintf(buf, "[thread:%d] close the client[%s:%d:%d(fd)] in the epoll success  send the protocol addrlen[%d] ",
+				pro->threadIndex,pro->clientHost.data(),pro->clientPort, pro->socketfd,(int)pro);
+	infoLog(buf);
 	if(n < 0){
 		sprintf(buf, "[thread:%d] write to the main thread close port error", pro->threadIndex);
 		warnLog(buf);
