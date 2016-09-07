@@ -250,8 +250,8 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 					read(fd, readbuf, 256);
 					sprintf(buf, "[main thread] close port have the connection request and  the content: %s", readbuf);
 					infoLog(buf);
-					int addr = 0;
-					sscanf(readbuf,"%d", &addr);
+					Protocol* addr = 0;
+					sscanf(readbuf,"%p", &addr);
 
 					//sprintf(buf, "[main thread] close port get connection fd  to close the [Protocol: fd = %d]", proFd);
 					//infoLog(buf);
@@ -271,7 +271,7 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 					// 	continue;
 					// }
 
-					Protocol* closePro = (Protocol*)addr;
+					Protocol* closePro = addr;
 					sprintf(buf,"[main thread] close port get the protocol:client[%s:%d] index=%d, threadIndex=%d, fd=%d",
 							closePro->clientHost.data(), closePro->clientPort, closePro->index, closePro->threadIndex, closePro->socketfd);
 					

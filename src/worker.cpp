@@ -48,7 +48,7 @@ void closeConnect(Protocol* pro){
 	pro->connectionLost();
 
 	//向本机关闭端口发送protocol的地址
-	sprintf(buf, "%d", (int)pro);
+	sprintf(buf, "%p", pro);
 	int sockfd = socket(AF_INET, SOCK_STREAM,0);
 	if( connect(sockfd, (struct sockaddr*)&localCloseAddr, sizeof(struct sockaddr)) < 0){
 		char temp[256];
