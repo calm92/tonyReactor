@@ -77,6 +77,7 @@ void Protocol::init(){
 	isclosed = 0;
 	index = -1;
 	socketfd = -1;
+	epfd = -1;
 	EPOLL_OUT_OP = 0;
 	writeBuf = "";
 }

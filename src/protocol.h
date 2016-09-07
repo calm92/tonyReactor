@@ -7,6 +7,8 @@
 
 class Protocol{
 public:
+	int epfd;
+	int threadIndex;
 	int socketfd;	//protocol所表示的connection的socket
 	int EPOLL_OUT_OP;
 	int isclosed;	

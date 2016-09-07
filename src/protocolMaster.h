@@ -17,6 +17,7 @@ public:
 	ProtocolMaster();
 	Protocol* getProtocolIns();
 	int closeProtocol(int);
+	Protocol* getProtocolFromIndex(int);
 private:
 	int poolSize;
 	int poolCap;
@@ -25,6 +26,19 @@ private:
 	int addPoolCap(int);	//往连接池中添加元素
 };
 
+template<class DerivedProtocol>
+Protocol* ProtocolMaster<DerivedProtocol>:: getProtocolFromIndex(int index){
+	if(index >= poolSize || index <= 0){
+		char buf[256];
+		sprintf(buf, "get protocol from index error, the index =%d, the poolSize=%d", index, poolSize);
+		warnLog(buf);
+		//debug 
+		exit(1);
+		return NULL;
+	}
+
+	return protocolPool[index];
+}
 
 
 
@@ -91,14 +105,17 @@ int ProtocolMaster<DerivedProtocol>::closeProtocol(int index){
 		return -1;
 	}
 	char buf[256];
-	sprintf(buf, "close protocol and the instance index = %d, poolSize = %d, poolCap= %d", index, poolSize,poolCap);
+	sprintf(buf, "before close [protocol:index = %d],  poolSize = %d, poolCap= %d", index, poolSize,poolCap);
 	debugLog(buf);
 
 	protocolPool[index]->init();
 	std::swap(protocolPool[index],    protocolPool[poolSize-1]);
 	protocolPool[index]->index = index;
 	poolSize--;
-	return 0;
+
+	sprintf(buf, "close the connection  protocol to the pool sucess, poolSize= %d, poolCap=%d", poolSize, poolCap);
+	debugLog(buf);
+	return protocolPool[index]->socketfd;
 }
 
 

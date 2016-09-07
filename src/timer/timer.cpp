@@ -152,7 +152,7 @@ int Timer::addTimerEventCap(int count){
 }
 
 
-int Timer::addTimerEvent(callbackPtr callback, void* arg, time_t timestamp){
+int Timer::addTimerEvent(callbackPtr callback, void* arg, time_t seconds){
 	if(timerEventsSize  == timerEventsCap){
 		int ret = addTimerEventCap(timerEventsSize);
 		if(ret < 0)
@@ -163,7 +163,7 @@ int Timer::addTimerEvent(callbackPtr callback, void* arg, time_t timestamp){
 
 	timerEvents[timerEventsSize]->callback = callback;
 	timerEvents[timerEventsSize]->arg = arg;
-	timerEvents[timerEventsSize]->timestamp = timestamp + currentTime;
+	timerEvents[timerEventsSize]->timestamp = seconds + currentTime;
 	timerEvents[timerEventsSize]->index = timerEventsSize;
 
 	//插入事件

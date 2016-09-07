@@ -24,6 +24,11 @@ public:
 int myProtocol::count = 0;
 
 void myProtocol::dataReceived(std::string data){
+	writeToClient(data);
+	closeConnect();
+	return;
+
+	//测试定时器
 	int sleepTime = rand() % 20;
 	time_t currentTime;
 	time(&currentTime);

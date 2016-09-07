@@ -7,7 +7,7 @@ INITIALIZE_EASYLOGGINGPP
 
 
 void initLog(){
-	el::Configurations conf("log.conf");
+	el::Configurations conf("../sample/log.conf");
 	el::Loggers::reconfigureAllLoggers(conf);
 }
 
