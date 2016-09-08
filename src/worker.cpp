@@ -62,8 +62,8 @@ void closeConnect(Protocol* pro){
 	sprintf(tempbuf, "[thread:%d] write to the main thread close port :  %s", pro->threadIndex, buf);
 	infoLog(tempbuf);
 
-	sprintf(buf, "[thread:%d] close the client[%s:%d:%d(fd)] in the epoll success  send the protocol addrlen[%d] ",
-				pro->threadIndex,pro->clientHost.data(),pro->clientPort, pro->socketfd,(int)pro);
+	sprintf(buf, "[thread:%d] close the client[%s:%d:%d(fd)] in the epoll success  send the protocol addrlen[%p] ",
+				pro->threadIndex,pro->clientHost.data(),pro->clientPort, pro->socketfd,pro);
 	infoLog(buf);
 	if(n < 0){
 		sprintf(buf, "[thread:%d] write to the main thread close port error", pro->threadIndex);
@@ -83,7 +83,7 @@ void worker_epoll_loop(int epfd){
 	sprintf(buf, "[thread:%d] thread start and be looping", epfd);
 	infoLog(buf);
 	while(1){
-		int n = epoll_wait(epfd, events, MAXEVENTS, epoll_timeout * 1000);
+		int n = epoll_wait(epfd, events, MAXEVENTS, epoll_timeout );
 		for(int i=0; i<n; i++){
 			Protocol* eventPro = (Protocol* )events[i].data.ptr;
 			//错误事件

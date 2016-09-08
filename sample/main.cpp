@@ -6,10 +6,9 @@
 #include<stdlib.h>
 
 void printLater(void* arg){
-	int num = (int) arg;
 	time_t currentTime;
 	time(&currentTime);
-	std::cout<<"call in the timeEvent and currentTime :"<<currentTime<<"----"<<num<<std::endl;
+	std::cout<<"call in the timeEvent and currentTime :"<<currentTime<<std::endl;
 	return;
 }
 
@@ -18,24 +17,21 @@ public:
 	virtual void dataReceived(std::string data);
 	virtual void connectionMade() ;
 	virtual void connectionLost() ;
-	static int count;
 };
 
-int myProtocol::count = 0;
 
 void myProtocol::dataReceived(std::string data){
-	writeToClient(data);
-	closeConnect();
-	return;
+	// writeToClient(data);
+	// closeConnect();
+	// return;
 
 	//测试定时器
-	// int sleepTime = rand() % 20;
-	// time_t currentTime;
-	// time(&currentTime);
-	// std::cout<<"currentTime: "<<currentTime<<"----sleep time:"<<sleepTime<<"-------tag"<<count<<std::endl;
-	// callLater(printLater, (void*)count, sleepTime);
-	// count++;
-	// return;
+	int sleepTime = rand() % 20;
+	time_t currentTime;
+	time(&currentTime);
+	std::cout<<"currentTime: "<<currentTime<<"----sleep time:"<<sleepTime<<std::endl;
+	callLater(printLater, (void*)NULL, sleepTime);
+	return;
 }
 
 void myProtocol::connectionMade(){

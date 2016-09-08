@@ -32,8 +32,6 @@ Protocol* ProtocolMaster<DerivedProtocol>:: getProtocolFromIndex(int index){
 		char buf[256];
 		sprintf(buf, "get protocol from index error, the index =%d, the poolSize=%d", index, poolSize);
 		warnLog(buf);
-		//debug 
-		exit(1);
 		return NULL;
 	}
 

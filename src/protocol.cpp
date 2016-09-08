@@ -37,7 +37,6 @@ int Protocol::epollRead(){
 					event.events = EPOLLIN | EPOLLET | EPOLLOUT;
 					epoll_ctl(epfd, EPOLL_CTL_MOD, this->socketfd, &event);
 				}
-				//debug
 				return 0;
 				// checkProtocolClose(eventPro);
 				// break;

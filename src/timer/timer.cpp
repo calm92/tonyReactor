@@ -2,6 +2,7 @@
 #include "../errorCode.h"
 #include "../log.h"
 
+#include<cstring>
 #include <algorithm>
 #include<time.h>
 
@@ -87,6 +88,19 @@ int Timer::pop(){
 	}
 
 	timerEvents[temp]->index = temp;
+	// //debug
+	// char buf[1024];
+	// sprintf(buf, "*************8delete event the timer heap: timestamp=%ld**********\n",time(NULL));
+	// for(int i=0; i< timerEventsSize; i++){
+	// 	char tempbuf[256];
+	// 	sprintf(tempbuf, "index=%d, timestamo = %ld\n", i, timerEvents[i]->timestamp);
+	// 	strcat(buf, tempbuf);
+	// }
+	// warnLog(buf);
+
+
+
+
 	return 0;
 }
 
@@ -95,43 +109,41 @@ time_t Timer::timer_loop(){
 	char buf[256];
 
 	mtx.lock();
-	sprintf(buf, "start the timer loop, the events size = %d", timerEventsSize);
-	debugLog(buf);
-	
-
 	if(timerEventsSize == 0){
 		//最好不要在中间return，容易造成死锁
-		mtx.unlock();
-		return 0;
+		;
 	}
-	time_t currentTime= 0;
-	time(&currentTime);
-	while(timerEventsSize > 0){
-		timerEvent*  event = top();
-		if(event == NULL)
-			break;
-		if(event->timestamp > currentTime)
-			break;
-		//将超时事件加入队列
-		timeoutEvent tempevent;
-		tempevent.callback = event->callback;
-		tempevent.arg = event->arg;
-		timeoutEvents.push_back(tempevent);
+	else{
+		time_t currentTime= 0;
+		time(&currentTime);
+		while(timerEventsSize > 0){
+			timerEvent*  event = top();
+			if(event == NULL)
+				break;
+			if(event->timestamp > currentTime)
+				break;
+			//将超时事件加入队列
+			timeoutEvent tempevent;
+			tempevent.callback = event->callback;
+			tempevent.arg = event->arg;
+			timeoutEvents.push_back(tempevent);
 
-		sprintf(buf, "start pop the event from the timerEvents, and the timerEventSize=%d", timerEventsSize);
-		debugLog(buf);
-		pop();
-		sprintf(buf, "have done pop the event from the timerEvents, and the timerEventSize=%d", timerEventsSize);
-		debugLog(buf);
-		continue;
+			sprintf(buf, "start pop the event from the timerEvents, and the timerEventSize=%d", timerEventsSize);
+			debugLog(buf);
+			pop();
+			sprintf(buf, "have done pop the event from the timerEvents, and the timerEventSize=%d", timerEventsSize);
+			debugLog(buf);
+			continue;
+		}
 	}
 	mtx.unlock();
 
 	
 
 	//执行timeoutevent
-	sprintf(buf, "do the timer event, currentTime=%ld", currentTime);
-	debugLog(buf);
+	//debug
+	// sprintf(buf, "do the timer event, currentTime=%ld", time(NULL));
+	// warnLog(buf);
 	int len = timeoutEvents.size();
 	for(int i=0; i<len; i++){
 		callbackPtr callback = timeoutEvents[i].callback;
@@ -139,7 +151,7 @@ time_t Timer::timer_loop(){
 	}
 	//clear不释放内存，避免重复申请释放内存
 	timeoutEvents.clear();
-
+	time_t currentTime;
 	time(&currentTime);
 	mtx.lock();
 	time_t seconds = 0;
@@ -150,6 +162,9 @@ time_t Timer::timer_loop(){
 		seconds = (event->timestamp - currentTime);
 	}
 	mtx.unlock();
+	//debug
+	// sprintf(buf, "the time loop end and the seconds = %ld", seconds);
+	// warnLog(buf);
 
 	return seconds;
 }
@@ -183,7 +198,7 @@ int Timer::addTimerEventCap(int count){
 
 int Timer::addTimerEvent(callbackPtr callback, void* arg, time_t seconds){
 	mtx.lock();
-
+	char buf[256];	
 	if(timerEventsSize  == timerEventsCap){
 		int ret = addTimerEventCap(timerEventsSize);
 		if(ret < 0){
@@ -214,11 +229,19 @@ int Timer::addTimerEvent(callbackPtr callback, void* arg, time_t seconds){
 			break;
 	}
 
-	char buf[256];
 	sprintf(buf, "register timer event to the timer, and the event info:  "
 		"timer_events size = %d, timer_events cap = %d, register event index = %d ", 
 		timerEventsSize,timerEventsCap, temp);
 	debugLog(buf);
+
+	//debug
+	// sprintf(buf, "*************add event the timer heap: timestamp=%ld**************\n",time(NULL));
+	// for(int i=0; i< timerEventsSize; i++){
+	// 	char tempbuf[256];
+	// 	sprintf(tempbuf, "index=%d, timestamo = %ld\n", i, timerEvents[i]->timestamp);
+	// 	strcat(buf, tempbuf);
+	// }
+	// warnLog(buf);
 
 	mtx.unlock();
 	return 0;

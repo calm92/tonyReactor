@@ -94,8 +94,8 @@ void Reactor<DerivedProtocol>::checkProtocolClose(Protocol* pro){
 template<class DerivedProtocol>
 void Reactor<DerivedProtocol>::closeConnectProtocol(Protocol* pro){
 	char tempbuf[256];
-	sprintf(tempbuf, "[main thread] close the connection protocol[%d] to the pool:client [%s:%d] disconnected and the protocol info:index=%d, fd = %d ",
-			(int)pro,pro->clientHost.data(),pro->clientPort, pro->index, pro->socketfd);
+	sprintf(tempbuf, "[main thread] close the connection protocol[%p] to the pool:client [%s:%d] disconnected and the protocol info:index=%d, fd = %d ",
+			pro,pro->clientHost.data(),pro->clientPort, pro->index, pro->socketfd);
 	infoLog(tempbuf);
 
 	int threadindex = pro->threadIndex;
@@ -166,7 +166,7 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 
 	//epoll_wait
 	while(1){
-		int n = epoll_wait(epfd, events, MAXEVENTS, epoll_timeout * 1000);
+		int n = epoll_wait(epfd, events, MAXEVENTS, epoll_timeout );
 		for(int i=0; i<n; i++){
 			Protocol* eventPro = (Protocol* )events[i].data.ptr;
 
@@ -288,11 +288,7 @@ int Reactor<DerivedProtocol>::epoll_loop(){
 		}
 
 		//处理超时事件
-		epoll_timeout =  timer->timer_loop();
-		if(epoll_timeout  ==  0)
-			epoll_timeout = EPOLLTIMEOUT;
-		sprintf(buf, "the timer loop is done and the epoll_timeout = %ld ", epoll_timeout);
-		infoLog(buf);		
+		timer->timer_loop();
 	}		
 }
 	
